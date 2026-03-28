@@ -2,9 +2,10 @@ import streamlit as st
 from rag import RAG
 from dotenv import load_dotenv
 import os
+import time
 
 # 1. Setup Page Configuration
-st.set_page_config(page_title="Web RAG Assistant", page_icon="🕸️", layout="centered")
+st.set_page_config(page_title="RAG-CRAW", page_icon="🕸️", layout="centered")
 
 # 2. Load API Key
 load_dotenv('.env')
@@ -59,7 +60,7 @@ header {visibility: hidden;}
 }
 </style>
 <div class="footer">
-    Developed with ❤️ by <b>Soumyadeep Roy Chowdhury</b> © 2026 | Jadavpur University IT '28 | 
+    Developed with <3 by <b>Soumyadeep Roy Chowdhury</b> © 2026 | Jadavpur University IT '28 | 
     <a href="https://github.com/soumyadeep-rc" target="_blank">GitHub</a>
     <a href="https://www.linkedin.com/in/soumyadeep-roy-chowdhury101/" target="_blank">LinkedIn</a>
     <a href="mailto:soumyadeeproychowdhury101@gmail.com">Gmail</a>
@@ -78,8 +79,8 @@ if 'messages' not in st.session_state:
 st.title("🕸️ RAG-CRAW : Your Web RAG Assistant")
 st.caption("Powered by Gemini 2.5 Flash & LangChain")
 
-# --- MAIN AREA SETTINGS (Moved from Sidebar) ---
-# This expander stays open initially, but automatically closes once data is loaded!
+# --- MAIN AREA SETTINGS ---
+# This expander stays open initially, but automatically closes once data is loaded
 with st.expander("⚙️ Crawler Settings & URL Input", expanded=not st.session_state['data_loaded']):
     resource_type = st.selectbox("Resource Type", ("Website Single Page", "Website Multiple Pages"))
     website_url = st.text_input("Enter website URL", placeholder="https://en.wikipedia.org/wiki/Virat_Kohli")
@@ -97,6 +98,7 @@ with st.expander("⚙️ Crawler Settings & URL Input", expanded=not st.session_
         else:
             with st.status("Initializing Crawler...", expanded=True) as status:
                 try:
+                    # Pass the write function to RAG so it can stream progress updates to the UI
                     if resource_type == "Website Single Page":
                         st.session_state['resource_processor'] = RAG(website_url, MY_API_KEY, write_function=st.write)
                     else:
@@ -104,12 +106,17 @@ with st.expander("⚙️ Crawler Settings & URL Input", expanded=not st.session_
                     
                     st.session_state['data_loaded'] = True
                     status.update(label="Website processed and loaded!", state="complete", expanded=False)
-                    st.rerun() # Force a reload so the expander closes automatically
+                    
+                    # UX Magic: Show a toast, wait 1.5 seconds, then refresh the page to close the expander
+                    st.toast("Website loaded successfully!", icon="✅")
+                    time.sleep(1.5)
+                    st.rerun() 
+                    
                 except Exception as e:
                     status.update(label="Failed to process website.", state="error")
                     st.error(f"Error details: {e}")
 
-st.divider() # Add a nice visual line to separate inputs from the chat
+st.divider()
 
 # --- MAIN CHAT UI ---
 st.markdown("<div style='margin-bottom: 80px;'></div>", unsafe_allow_html=True)
