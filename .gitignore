@@ -1,7 +1,25 @@
-venv
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# --- Environment Secrets ---
 .env
-indexes
-playground.py
-.devcontainer
-indexes/
-av.py
+.env.local
+
+# --- Project Specific Scraping Garbage ---
+page.html
+page_*.html
+*.log
+geckodriver.log
+
+# --- VS Code & IDE ---
+.vscode/
+.DS_Store
+
+# --- Vector Database Storage ---
+faiss_index/
+*.faiss
+*.pkl

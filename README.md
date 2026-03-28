@@ -137,4 +137,3 @@ Distributed under the [MIT License](LICENSE).
 **Developed by [Soumyadeep Roy Chowdhury](https://github.com/soumyadeep-rc)**
 Jadavpur University IT '28
 This project is licensed under the MIT License. See the LICENSE file for details.
->>>>>>> 8add2ae9d386d15ccf7b40936f9353ae0535010d

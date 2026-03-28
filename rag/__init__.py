@@ -76,8 +76,10 @@ class RAG:
         documents = text_splitter.split_documents(text_documents)
 
         if not documents:
-            self.write_function("❌ Error: No content could be extracted. The site might be blocking the crawler.")
-            return None
+            # We raise a ValueError so the UI knows to stop and show the error
+            error_message = "No content could be extracted. The site might be blocking the crawler (common with LinkedIn/GitHub)."
+            self.write_function(f"❌ {error_message}")
+            raise ValueError(error_message)
 
         self.write_function("Storing content in vector store...")
 
@@ -124,9 +126,10 @@ class RAG:
 
         self.write_function('Storing content in vector store...')
         
-        if not text_documents:
-            self.write_function("Warning: No extractable documents found to embed.")
-            return None
+        if not documents:
+            error_message = "No extractable documents found. The crawler might be blocked."
+            self.write_function(f"❌ {error_message}")
+            raise ValueError(error_message)
 
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         documents = text_splitter.split_documents(text_documents)
