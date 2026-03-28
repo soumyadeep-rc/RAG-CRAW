@@ -13,6 +13,11 @@ MY_API_KEY = os.getenv('GOOGLE_API_KEY')
 # 3. Custom CSS for the Footer
 footer_css = """
 <style>
+/* Hide Streamlit default top menu and footer */
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+.stApp > header {display: none;} /* specifically hides the top right toolbar */
+
 .footer {
     position: fixed;
     left: 0;
