@@ -42,6 +42,7 @@ A high-performance **Retrieval-Augmented Generation (RAG)** application that cra
 ## 📁 Project Structure
 
 ```
+<<<<<<< HEAD
 RAG-CRAW/
 ├── client.py              # Streamlit frontend — UI logic, chat interface, session state
 ├── rag/
@@ -49,6 +50,9 @@ RAG-CRAW/
 ├── crow_utils.py          # Utility functions for recursive web scraping via Selenium
 └── .streamlit/
     └── config.toml        # Custom UI theme and branding configuration
+=======
+git clone https://github.com/soumyadeep-rc/RAG-CRAWLER.git
+>>>>>>> 8add2ae9d386d15ccf7b40936f9353ae0535010d
 ```
 
 ---
@@ -93,6 +97,7 @@ The app will be available at `http://localhost:8501` by default.
 
 ## 🔍 Usage
 
+<<<<<<< HEAD
 1. Open the app in your browser.
 2. Enter the URL of the web page or site you want to ingest.
 3. The system will crawl, chunk, embed, and index the content into FAISS.
@@ -136,3 +141,6 @@ Distributed under the [MIT License](LICENSE).
 
 **Developed by [Soumyadeep Roy Chowdhury](https://github.com/soumyadeep-rc)**
 Jadavpur University IT '28
+=======
+This project is licensed under the MIT License. See the LICENSE file for details.
+>>>>>>> 8add2ae9d386d15ccf7b40936f9353ae0535010d
