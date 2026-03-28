@@ -7,8 +7,7 @@ This project showcases a powerful web application built using Retrieval-Augmente
 To set up the project locally, follow these steps:
 1. Clone the repository:
 ```
-git clone https://github.com/sahilhadke/website-rag.git
-cd website-rag
+git clone https://github.com/soumyadeep-rc/RAG-CRAWLER.git
 ```
 
 2. Install the required dependencies:
