@@ -1,7 +1,8 @@
-import time
-from selenium.webdriver.common.by import By
-from langchain_core.documents import Document
 from urllib.parse import urlparse
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from langchain_core.documents import Document
 from langchain_community.document_loaders import UnstructuredHTMLLoader
 
 def are_urls_same(url1, url2):
@@ -42,27 +43,48 @@ def scrape_site(driver, url, visited=None, count:int=2, write_function=None):
         visited = set()
     if url in visited:
         return []
-    print(f"Visiting: {url} + visited Len = {len(visited)}")
+        
+    print(f"Visiting: {url} | Visited Len = {len(visited)}")
     visited.add(url)
-    driver.get(url)
-    time.sleep(2)  # Adjust timing based on the website's response time
-    content = driver.page_source
+    
+    try:
+        driver.get(url)
+        
+        # Wait up to 10 seconds for the <body> tag to load. 
+        # Moves on instantly if it loads faster.
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        content = driver.page_source
+        
+    except Exception as e:
+        write_function(f"Error or timeout loading {url}: {e}")
+        return []
 
-    with open('page.html', 'w') as f:
+    # UTF-8 encoding to prevent Unicode crashes
+    with open('page.html', 'w', encoding='utf-8') as f:
         f.write(content)
 
     loader = UnstructuredHTMLLoader('page.html')
     text_documents = loader.load()
 
+    # Safeguard against empty document lists from JS-heavy or blocked pages
+    if not text_documents:
+        write_function(f"Warning: No extractable text found on {url}")
+        return []
+
     links = driver.find_elements(By.TAG_NAME, 'a')
     links_hrefs = [link.get_attribute('href') for link in links]
     data = []
+    
     temp_document = Document(page_content=text_documents[0].page_content, metadata={"source": url})
     data.append(temp_document)
+    
     for href in links_hrefs:
         if href and not url_exists_in_set(visited, href):
             if(len(visited) >= count):
                 break # Stop scraping after visiting max_pages
 
             data.extend(scrape_site(driver, href, visited, count, write_function=write_function))
+            
     return data

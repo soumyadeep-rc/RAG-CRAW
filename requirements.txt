@@ -2,15 +2,9 @@ streamlit
 python-dotenv
 selenium
 webdriver-manager
-
 langchain
-langchain_core
+langchain-core
 langchain-community
-langchain_google_genai
-
-
-playwright
-sentence-transformers
-
+langchain-google-genai
 faiss-cpu
 unstructured
