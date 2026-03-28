@@ -59,7 +59,7 @@ header {visibility: hidden;}
 }
 </style>
 <div class="footer">
-    Developed with ❤️ by <b>Soumyadeep Roy Chowdhury</b> © 2026 | Jadavpur University IT '29 | 
+    Developed with ❤️ by <b>Soumyadeep Roy Chowdhury</b> © 2026 | Jadavpur University IT '28 | 
     <a href="https://github.com/soumyadeep-rc" target="_blank">GitHub</a>
     <a href="https://www.linkedin.com/in/soumyadeep-roy-chowdhury101/" target="_blank">LinkedIn</a>
     <a href="mailto:soumyadeeproychowdhury101@gmail.com">Gmail</a>
@@ -89,7 +89,7 @@ with st.expander("⚙️ Crawler Settings & URL Input", expanded=not st.session_
     else:
         number_of_pages = 1
 
-    if st.button("🚀 Load Website", use_container_width=True):
+    if st.button("Load Website", use_container_width=True):
         if not website_url:
             st.warning("Please enter a URL first.")
         elif not MY_API_KEY:
