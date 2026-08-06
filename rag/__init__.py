@@ -24,9 +24,9 @@ from langchain.retrievers import EnsembleRetriever, ParentDocumentRetriever, Con
 from langchain.storage import InMemoryStore 
 from langchain_community.retrievers import BM25Retriever 
 from langchain_community.document_compressors.flashrank_rerank import FlashrankRerank 
-from langchain_classic.chains import create_retrieval_chain
+from langchain.chains import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.documents import Document
 
 from selenium import webdriver
