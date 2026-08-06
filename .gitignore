@@ -33,7 +33,7 @@ nltk_data/
 
 #testing
 
-rag_basline_scores.csv
+rag_baseline_scores.csv
 rag_summary.csv
 evaluate_rag.py
 golden_dataset.json
