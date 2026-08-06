@@ -5,136 +5,154 @@ import os
 import time
 
 # 1. Setup Page Configuration
-st.set_page_config(page_title="RAG-CRAW", page_icon="🕸️", layout="centered")
+st.set_page_config(page_title="RAG-CRAW", page_icon="🕸️", layout="centered", initial_sidebar_state="expanded")
 
 # 2. Load API Key
 load_dotenv('.env')
 MY_API_KEY = os.getenv('GOOGLE_API_KEY')
 
-# 3. Custom CSS for the Footer & Mobile fixes
-footer_css = """
+# 3. Custom CSS for UI Polish
+ui_styling = """
 <style>
-/* Hide Streamlit default top menu */
 #MainMenu {visibility: hidden;}
 header {visibility: hidden;}
-.stApp > header {display: none;}
-
-/* Push the chat input box up so it sits ABOVE our custom footer */
-.stChatInputContainer > div {
-    padding-bottom: 60px !important;
-}
-
-/* Base Footer Styles */
-.footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    background-color: #1e212b;
-    color: #fafafa;
+.sidebar-footer {
+    margin-top: 40px; 
+    padding-top: 15px;
     text-align: center;
-    padding: 10px;
-    font-size: 14px;
-    z-index: 999;
-    border-top: 1px solid #6366f1;
+    font-size: 13px;
+    color: #888;
+    border-top: 1px solid #444;
 }
-.footer a {
-    color: #6366f1;
-    text-decoration: none;
-    margin: 0 10px;
-    font-weight: bold;
+.sidebar-footer a { color: #6366f1; text-decoration: none; font-weight: 600; }
+.sidebar-footer a:hover { text-decoration: underline; }
+.stButton>button[kind="primary"] {
+    background-color: #6366f1; color: white; border-radius: 8px; border: none; transition: all 0.2s ease-in-out;
 }
-.footer a:hover {
-    text-decoration: underline;
-}
+.stButton>button[kind="primary"]:hover { background-color: #4f46e5; transform: translateY(-1px); }
 
-/* Mobile Optimization: Make footer smaller on phones */
-@media (max-width: 768px) {
-    .footer {
-        font-size: 11px;
-        padding: 8px;
-    }
-    .footer a {
-        margin: 0 4px;
-    }
-}
+/* Make the Source Citations look slightly cleaner */
+.streamlit-expanderHeader { font-size: 14px; font-weight: 500; color: #a1a1aa; }
 </style>
-<div class="footer">
-    Developed with <3 by <b>Soumyadeep Roy Chowdhury</b> © 2026 | Jadavpur University IT '28 | 
-    <a href="https://github.com/soumyadeep-rc" target="_blank">GitHub</a>
-    <a href="https://www.linkedin.com/in/soumyadeep-roy-chowdhury101/" target="_blank">LinkedIn</a>
-    <a href="mailto:soumyadeeproychowdhury101@gmail.com">Gmail</a>
-</div>
 """
-st.markdown(footer_css, unsafe_allow_html=True)
+st.markdown(ui_styling, unsafe_allow_html=True)
 
 # 4. Initialize Session States
 if 'data_loaded' not in st.session_state:
     st.session_state['data_loaded'] = False
+if 'current_url' not in st.session_state:
+    st.session_state['current_url'] = ""
 if 'resource_processor' not in st.session_state:
     st.session_state['resource_processor'] = None
+if 'crawl_logs' not in st.session_state:
+    st.session_state['crawl_logs'] = [] 
 if 'messages' not in st.session_state:
-    st.session_state['messages'] = [{"role": "assistant", "content": "Hello! Load a website above, and then ask me anything about it."}]
+    st.session_state['messages'] = [{"role": "assistant", "content": "👋 Hello! Please load a website URL from the sidebar to begin.", "sources": []}]
 
-st.title("🕸️ RAG-CRAW : Your Web RAG Assistant")
-st.caption("Powered by Gemini 2.5 Flash & LangChain")
-
-# --- MAIN AREA SETTINGS ---
-# This expander stays open initially, but automatically closes once data is loaded
-with st.expander("⚙️ Crawler Settings & URL Input", expanded=not st.session_state['data_loaded']):
-    resource_type = st.selectbox("Resource Type", ("Website Single Page", "Website Multiple Pages"))
-    website_url = st.text_input("Enter website URL", placeholder="https://en.wikipedia.org/wiki/Virat_Kohli")
+# --- SIDEBAR: CONFIGURATION & LOGS ---
+with st.sidebar:
+    st.title("⚙️ Setup")
     
-    if resource_type == "Website Multiple Pages":
-        number_of_pages = st.number_input("Pages to crawl (max 50)", min_value=1, max_value=50, value=5)
-    else:
-        number_of_pages = 1
-
-    if st.button("Load Website", use_container_width=True):
+    website_url = st.text_input("Enter website URL:", placeholder="https://en.wikipedia.org/wiki/Virat_Kohli")
+    
+    if st.button("Load & Vectorize Website", type="primary", use_container_width=True):
         if not website_url:
             st.warning("Please enter a URL first.")
         elif not MY_API_KEY:
-            st.error("Backend API Key is missing! Check your Secrets.")
+            st.error("Backend API Key missing!")
         else:
-            with st.status("Initializing Crawler...", expanded=True) as status:
+            st.session_state['crawl_logs'] = []
+            st.session_state['messages'] = [{"role": "assistant", "content": f"✅ Successfully connected to `{website_url}`. Ask me anything!", "sources": []}]
+            
+            with st.status("Initializing RAG Engine...", expanded=True) as status:
+                def log_update(msg):
+                    status.write(msg)
+                    st.session_state['crawl_logs'].append(msg)
+                
                 try:
-                    # Pass the write function to RAG so it can stream progress updates to the UI
-                    if resource_type == "Website Single Page":
-                        st.session_state['resource_processor'] = RAG(website_url, MY_API_KEY, write_function=st.write)
-                    else:
-                        st.session_state['resource_processor'] = RAG(website_url, MY_API_KEY, resource_type="Website Multiple Pages", recursive_count=number_of_pages, write_function=st.write)
-                    
+                    st.session_state['resource_processor'] = RAG(website_url, MY_API_KEY, write_function=log_update)
                     st.session_state['data_loaded'] = True
-                    status.update(label="Website processed and loaded!", state="complete", expanded=False)
-                    
-                    # UX Magic: Show a toast, wait 1.5 seconds, then refresh the page to close the expander
-                    st.toast("Website loaded successfully!", icon="✅")
-                    time.sleep(1.5)
+                    st.session_state['current_url'] = website_url
+                    status.update(label="System Ready!", state="complete", expanded=False)
+                    st.toast("Database loaded!", icon="🚀")
+                    time.sleep(1.0)
                     st.rerun() 
-                    
                 except Exception as e:
                     status.update(label="Failed to process website.", state="error")
                     st.error(f"Error details: {e}")
 
+    if st.session_state['data_loaded'] and st.session_state['crawl_logs']:
+        with st.expander("Terminal Logs", expanded=False):
+            for log in st.session_state['crawl_logs']:
+                st.markdown(f"<span style='font-size: 12px; color: #a1a1aa;'>{log}</span>", unsafe_allow_html=True)
+                
+    st.divider()
+    
+    if st.button("🗑️ Clear Chat History", use_container_width=True) and st.session_state['data_loaded']:
+        st.session_state['messages'] = [{"role": "assistant", "content": f"Chat cleared! Ask me anything else about `{st.session_state['current_url']}`.", "sources": []}]
+        st.rerun()
+
+    st.markdown("""
+    <div class="sidebar-footer">
+        <div style="margin-bottom: 5px;">Built by <b>Soumyadeep Roy Chowdhury</b></div>
+        <div style="font-size: 11px; margin-bottom: 10px;">Jadavpur University IT '28</div>
+        <a href="https://github.com/soumyadeep-rc" target="_blank">GitHub</a> • 
+        <a href="https://www.linkedin.com/in/soumyadeep-roy-chowdhury101/" target="_blank">LinkedIn</a>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# --- MAIN CHAT AREA ---
+st.title("🕸️ RAG-CRAW")
+
+if st.session_state['data_loaded']:
+    st.caption(f"🟢 **Active Session:** Chatting with `{st.session_state['current_url']}`")
+else:
+    st.caption("🔴 **Status:** Awaiting URL Input (See Sidebar)")
+
 st.divider()
 
-# --- MAIN CHAT UI ---
-st.markdown("<div style='margin-bottom: 80px;'></div>", unsafe_allow_html=True)
-
+# Render chat messages with their respective Sources
 for msg in st.session_state['messages']:
-    st.chat_message(msg["role"]).write(msg["content"])
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
+        # If it's an assistant message and has sources, render the expander
+        if msg.get("sources"):
+            with st.expander("📚 View Sources Used"):
+                for i, source in enumerate(msg["sources"]):
+                    st.markdown(f"**Source {i+1}**")
+                    st.info(source)
 
-if prompt := st.chat_input("Ask a question about the loaded website..."):
+prompt_placeholder = "Ask a question about the loaded website..." if st.session_state['data_loaded'] else "👈 Load a website in the sidebar first!"
+
+if prompt := st.chat_input(prompt_placeholder, disabled=not st.session_state['data_loaded']):
+    
     st.session_state['messages'].append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
+    
+    with st.chat_message("user"):
+        st.write(prompt)
 
-    if not st.session_state['data_loaded'] or not st.session_state['resource_processor']:
-        error_msg = "Please load a website in the Crawler Settings above before asking questions!"
-        st.session_state['messages'].append({"role": "assistant", "content": error_msg})
-        st.chat_message("assistant").error(error_msg)
-    else:
-        with st.chat_message("assistant"):
-            with st.spinner("Scanning vector database..."):
-                response = st.session_state['resource_processor'].get_response(prompt)
-                st.write(response)
-                st.session_state['messages'].append({"role": "assistant", "content": response})
+    with st.chat_message("assistant"):
+        with st.spinner("Searching and generating..."):
+            
+            # The backend now returns a dictionary with 'answer' and 'sources'
+            result_dict = st.session_state['resource_processor'].get_response(prompt)
+            answer_text = result_dict["answer"]
+            sources_list = result_dict["sources"]
+            
+            # Display the answer
+            st.write(answer_text)
+            
+            # Render the sources immediately for the live message
+            if sources_list:
+                with st.expander("📚 View Sources Used"):
+                    for i, source in enumerate(sources_list):
+                        st.markdown(f"**Source {i+1}**")
+                        st.info(source)
+            
+            # Save both to chat history
+            st.session_state['messages'].append({
+                "role": "assistant", 
+                "content": answer_text,
+                "sources": sources_list
+            })

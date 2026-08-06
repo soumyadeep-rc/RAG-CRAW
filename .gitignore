@@ -8,6 +8,7 @@ venv/
 # --- Environment Secrets ---
 .env
 .env.local
+.streamlit/secrets.toml
 
 # --- Project Specific Scraping Garbage ---
 page.html
@@ -21,5 +22,18 @@ geckodriver.log
 
 # --- Vector Database Storage ---
 faiss_index/
+vector_cache/
 *.faiss
 *.pkl
+
+# --- Downloaded AI Models (Failsafes) ---
+# Prevents FlashRank or HuggingFace from accidentally caching models in the repo
+flashrank_models/
+nltk_data/
+
+#testing
+
+rag_basline_scores.csv
+rag_summary.csv
+evaluate_rag.py
+golden_dataset.json

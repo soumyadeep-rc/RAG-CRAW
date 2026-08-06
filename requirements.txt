@@ -1,14 +1,17 @@
+# --- Core Framework ---
 streamlit
-numpy<2.0.0
 langchain
 langchain-community
-langchain-google-genai
 langchain-core
-faiss-cpu
-selenium
+langchain-google-genai
 python-dotenv
-unstructured
-unstructured[html]
-spacy
-nltk
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
+
+# --- Web Scraping & Parsing (V2) ---
+selenium
+beautifulsoup4
+markdownify
+
+# --- Vector Database & Hybrid Search (V2) ---
+faiss-cpu
+rank_bm25
+flashrank
