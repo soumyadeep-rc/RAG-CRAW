@@ -14,8 +14,21 @@ MY_API_KEY = os.getenv('GOOGLE_API_KEY')
 # 3. Custom CSS for UI Polish
 ui_styling = """
 <style>
+/* 1. Safely hide the top-right menu and deploy buttons */
 #MainMenu {visibility: hidden;}
-header {visibility: hidden;}
+.stAppDeployButton {display: none;}
+[data-testid="stToolbar"] {display: none;} 
+[data-testid="stHeader"] {background-color: transparent !important;}
+
+/* 2. Lock the sidebar open ON DESKTOP ONLY. */
+@media (min-width: 768px) {
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+    }
+}
+
+/* 3. Keep original sidebar footer & button styling */
 .sidebar-footer {
     margin-top: 40px; 
     padding-top: 15px;
@@ -30,8 +43,6 @@ header {visibility: hidden;}
     background-color: #6366f1; color: white; border-radius: 8px; border: none; transition: all 0.2s ease-in-out;
 }
 .stButton>button[kind="primary"]:hover { background-color: #4f46e5; transform: translateY(-1px); }
-
-/* Make the Source Citations look slightly cleaner */
 .streamlit-expanderHeader { font-size: 14px; font-weight: 500; color: #a1a1aa; }
 </style>
 """
