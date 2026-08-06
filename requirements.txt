@@ -1,17 +1,14 @@
-# --- Core Framework ---
 streamlit
-langchain
-langchain-community
-langchain-core
+langchain==0.2.16
+langchain-community==0.2.16
+langchain-core==0.2.43
+langchain-text-splitters==0.2.4
 langchain-google-genai
-python-dotenv
-numpy<2.0.0
-# --- Web Scraping & Parsing (V2) ---
-selenium
 beautifulsoup4
 markdownify
-
-# --- Vector Database & Hybrid Search (V2) ---
+selenium
 faiss-cpu
-rank_bm25
 flashrank
+rank_bm25
+python-dotenv
+numpy<2.0.0
