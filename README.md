@@ -154,7 +154,7 @@ The pipeline was benchmarked using the **RAGAS framework** to optimize hyperpara
 
 ## License
 
-Distributed under the [MIT LICENSE]
+Distributed under the [MIT LICENSE](https://github.com/soumyadeep-rc/RAG-CRAW/blob/main/LICENSE)
 
 ---
 
