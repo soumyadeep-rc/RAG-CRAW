@@ -6,8 +6,6 @@
 ![Gemini](https://img.shields.io/badge/Google_Gemini-3.1_Flash_Lite-8A2BE2.svg)
 ![FAISS](https://img.shields.io/badge/FAISS-Vector_Search-black.svg)
 
-** Live Demo:** [https://src-rag-craw.streamlit.app/](https://src-rag-craw.streamlit.app/)
-
 RAG-CRAW is an advanced Retrieval-Augmented Generation (RAG) system built to dynamically ingest web pages, process them through a sophisticated NLP pipeline, and generate highly accurate, hallucination-free answers using Google's Gemini LLM.
 
 Unlike standard RAG tutorials, this project implements **Enterprise-grade architectures**, including Hierarchical Parent-Child Chunking, Hybrid Search (FAISS + BM25), Cross-Encoder Re-ranking (FlashRank), and Persistent Vector Caching.
