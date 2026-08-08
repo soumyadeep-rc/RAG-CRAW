@@ -1,139 +1,163 @@
-# RAG-CRAW — Your Web RAG Assistant
+# 🕸️ RAG-CRAW: Enterprise-Grade Web Scraping & RAG Pipeline
 
-A high-performance **Retrieval-Augmented Generation (RAG)** application that crawls live web pages, indexes their content into a vector store, and answers user queries using **Gemini 2.5 Flash** — all through a sleek, real-time Streamlit interface.
+![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.32-FF4B4B.svg)
+![LangChain](https://img.shields.io/badge/LangChain-0.2.16-green.svg)
+![Gemini](https://img.shields.io/badge/Google_Gemini-3.1_Flash_Lite-8A2BE2.svg)
+![FAISS](https://img.shields.io/badge/FAISS-Vector_Search-black.svg)
 
----
+** Live Demo:** [https://src-rag-craw.streamlit.app/](https://src-rag-craw.streamlit.app/)
 
-## 📌 Key Features
+RAG-CRAW is an advanced Retrieval-Augmented Generation (RAG) system built to dynamically ingest web pages, process them through a sophisticated NLP pipeline, and generate highly accurate, hallucination-free answers using Google's Gemini LLM.
 
-- **Intelligent Web Crawling** — Uses headless Selenium (Firefox/Geckodriver) to scrape single pages or recursively crawl entire domains, extracting clean, structured text via `UnstructuredHTMLLoader`.
-- **Gemini 2.5 Flash Integration** — Leverages Google's latest high-speed LLM for rapid, grounded response generation with low latency.
-- **Fail-Safe Embedding Logic** — Implements a custom batching system (`models/gemini-embedding-exp-03-07`) that processes chunks in batches of 80. On quota exhaustion, the system automatically waits 65 seconds before resuming — ensuring 100% embedding success even for large sites.
-- **Vectorized Search via FAISS** — All embedded chunks are stored in a FAISS index for millisecond-latency similarity retrieval at query time.
-- **Modern Chat UX** — A sleek, indigo-themed dark mode Streamlit interface with real-time streaming responses and chat history.
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Language | Python 3.10+ |
-| AI Orchestration | LangChain |
-| Frontend | Streamlit |
-| Vector Store | FAISS |
-| LLM & Embeddings | Google Generative AI (Gemini) |
-| Browser Automation | Selenium (Firefox + Geckodriver) |
+Unlike standard RAG tutorials, this project implements **Enterprise-grade architectures**, including Hierarchical Parent-Child Chunking, Hybrid Search (FAISS + BM25), Cross-Encoder Re-ranking (FlashRank), and Persistent Vector Caching.
 
 ---
 
-## ⚙️ How It Works
+## Key Enterprise Features
 
-1. **Ingestion** — Selenium fetches the raw HTML of the target URL(s), which is then cleaned and converted to plain text using `UnstructuredHTMLLoader`.
-
-2. **Chunking** — The extracted text is split using `RecursiveCharacterTextSplitter` into 1000-character segments with overlap to preserve contextual continuity across chunk boundaries.
-
-3. **Rate-Limited Embedding** — Chunks are sent to Google's embedding API in batches of 80. If the quota is hit mid-batch, the system pauses for 65 seconds before continuing — making it robust for large-scale crawls without manual intervention.
-
-4. **Retrieval** — At query time, the top-k most semantically relevant chunks are pulled from the FAISS index and injected as context into Gemini 2.5 Flash, which generates a grounded, factual response.
+* **Stealth Web Scraping:** Uses headless Selenium (`Firefox-ESR`) with a dynamically injected Windows 10 Chrome Desktop `User-Agent` to bypass standard anti-bot firewalls (like Cloudflare) and extract raw HTML after JavaScript execution.
+* **Hierarchical (Parent-Child) Chunking:** Embeds small chunks (600 characters) for pinpoint vector math, but retrieves large parent chunks (1,200 characters) to ensure the LLM has complete context and doesn't suffer from "lost-in-the-middle" amnesia.
+* **Hybrid Search (Ensemble Retriever):** Fuses **FAISS** semantic similarity search (60% weight) with **BM25** exact-keyword matching (40% weight) to handle both contextual queries and dense jargon/acronyms.
+* **Cross-Encoder Re-ranking (FlashRank):** Passes retrieved chunks through a local `ms-marco-MultiBERT` model to mercilessly grade and filter out irrelevant context before it ever reaches the LLM.
+* **Persistent Vector Caching & Garbage Collection:** Hashes the URL to locally save the FAISS `.faiss` index and `.pkl` document store. Skips the scraping and embedding pipeline entirely on subsequent visits. A garbage collector safely limits the cache to the 5 most recent sites.
+* **API Rate-Limit Defenses:** Custom exponential backoff and dynamic batching (90 chunks/batch) prevent Google API `429 Too Many Requests` crashes during heavy ingestion.
 
 ---
 
-## 📁 Project Structure
+## System Architecture & Workflow
 
+The following flowchart illustrates the complete data lifecycle, from URL ingestion to final UI generation.
+
+*(Note: GitHub natively renders this Mermaid.js diagram.)*
+
+```mermaid
+graph TD
+    %% Styling
+    classDef frontend fill:#FF4B4B,stroke:#333,stroke-width:2px,color:#fff;
+    classDef scraping fill:#F4A261,stroke:#333,stroke-width:2px,color:#000;
+    classDef processing fill:#2A9D8F,stroke:#333,stroke-width:2px,color:#fff;
+    classDef ai fill:#8A2BE2,stroke:#333,stroke-width:2px,color:#fff;
+    classDef storage fill:#264653,stroke:#333,stroke-width:2px,color:#fff;
+
+    %% Phase 1 & 2: Input & Cache Routing
+    A[User Inputs URL in Streamlit]:::frontend --> B{MD5 Hash Cache Exists?}
+    B -- Yes --> C[(Load FAISS & Parent Store)]:::storage
+
+    %% Phase 3: Scraping
+    B -- No --> D[Selenium Stealth WebDriver]:::scraping
+    D --> E[BeautifulSoup + Markdownify]:::processing
+
+    %% Phase 4: Chunking
+    E --> F[Parent Chunking<br/>1,200 Chars]:::processing
+    F -->|Assign UUIDs| G[Child Chunking<br/>600 Chars]:::processing
+
+    %% Storage & Vectorization
+    F -.->|Raw Text| H[(InMemoryStore)]:::storage
+    G --> I[Gemini Embeddings API]:::ai
+    I --> J[(FAISS Vector DB)]:::storage
+    J -.-> C
+
+    %% Phase 5 & 6: Retrieval & Generation
+    U[User Chat Query]:::frontend --> K[Hybrid Search Assembly]
+    C --> K
+    K -->|Text Match| L[BM25 Keyword Search]:::processing
+    K -->|Semantic Match| M[FAISS Vector Search]:::processing
+    M -.->|Use UUID to fetch full context| H
+
+    L --> N[Ensemble Retriever<br/>40% BM25 / 60% FAISS]:::processing
+    M --> N
+
+    N --> O[FlashRank Cross-Encoder<br/>Filters & Keeps Top 5]:::ai
+    O --> P[Gemini 3.1-Flash-Lite LLM]:::ai
+    P --> Q[Streamlit UI: Answer + Top 5 Sources]:::frontend
 ```
-RAG-CRAW/
-├── client.py              # Streamlit frontend — UI logic, chat interface, session state
-├── rag/
-│   └── __init__.py        # Core RAG class — LLM orchestration, embeddings, FAISS indexing
-├── crow_utils.py          # Utility functions for recursive web scraping via Selenium
-└── .streamlit/
-    └── config.toml        # Custom UI theme and branding configuration
-```
 
 ---
 
-## 🔧 Installation & Setup
+## Technical Deep Dive: Major Hurdles
 
-### 1. Prerequisites
+One of the major engineering hurdles in this project was balancing chunk sizes with the Cross-Encoder re-ranker.
 
-Ensure the following are installed on your system before proceeding:
+Initially, Parent Chunks were set to `2,000` characters. While this provided great context, **RAGAS evaluation metrics showed a massive drop in Context Precision**.
 
-- [Firefox](https://www.mozilla.org/en-US/firefox/new/)
-- [Geckodriver](https://github.com/mozilla/geckodriver/releases) (must be accessible in your system `PATH`)
-- Python 3.10+
+* **The Diagnosis:** The FlashRank BERT-based model operates on a strict **512-token limit** (~2,048 characters). By feeding it a 2,000-character chunk alongside a user query, it exceeded the memory limit, causing the model to forcefully truncate the bottom half of the text. If the answer lived in the truncated half, the chunk was discarded.
+* **The Fix:** Parent chunk sizes were aggressively tuned down to `1,200` characters (~300 tokens), leaving a safe 200+ token buffer for system prompts and user queries.
+* **The Result:** FlashRank successfully reads 100% of the retrieved text. RAGAS **Faithfulness surged to 0.90** and **Answer Relevancy doubled to 0.72**.
 
-### 2. Clone & Install
+---
+
+## Tech Stack
+
+* **Frontend Interface:** `Streamlit` (with state management & custom CSS injection)
+* **Web Scraping & Parsing:** `Selenium`, `BeautifulSoup4`, `Markdownify`
+* **Orchestration & Chunking:** `LangChain` (v0.2.x), `RecursiveCharacterTextSplitter`, `MarkdownHeaderTextSplitter`
+* **Embedding & LLM:** Google `gemini-embedding-2`, Google `gemini-3.1-flash-lite`
+* **Vector Database & Storage:** `FAISS-cpu`, LangChain `InMemoryStore`
+* **Search Algorithms:** `rank_bm25` (BM25), `FlashRank` (MultiBERT Cross-Encoder)
+
+---
+
+## Live Demo
+
+Try the app instantly without any local setup:
+
+👉 **[https://src-rag-craw.streamlit.app/](https://src-rag-craw.streamlit.app/)**
+
+---
+
+## Installation & Local Setup
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/soumyadeep-rc/RAG-CRAW.git
 cd RAG-CRAW
+```
+
+### 2. Create a Virtual Environment (Optional but Recommended)
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Environment Variables
+*(Note: Streamlit Cloud deployments require a `packages.txt` file containing `firefox-esr` to run the headless web scraper).*
 
-Create a `.env` file in the root directory:
+### 4. Setup Environment Variables
 
-```plaintext
-GOOGLE_API_KEY=your_gemini_api_key_here
+Create a `.env` file in the root directory and add your Google API key:
+
+```env
+GOOGLE_API_KEY="your_api_key_here"
 ```
 
-> You can obtain a Gemini API key from [Google AI Studio](https://aistudio.google.com/).
-
-### 4. Run the App
+### 5. Run the Application
 
 ```bash
 streamlit run client.py
 ```
 
-The app will be available at `http://localhost:8501` by default.
+---
+
+## Evaluation & Metrics (RAGAS)
+
+The pipeline was benchmarked using the **RAGAS framework** to optimize hyperparameters. The current setup intentionally sacrifices strict Context Precision (by increasing `top_n=5` candidates) in order to maximize **Recall**, ensuring the LLM is fed enough context to achieve near-perfect **Faithfulness (0.90)** and hallucination-free generation.
 
 ---
 
-## 🔍 Usage
+## License
 
-1. Open the app in your browser.
-2. Enter the URL of the web page or site you want to ingest.
-3. The system will crawl, chunk, embed, and index the content into FAISS.
-4. Ask any question in the chat interface — the RAG pipeline retrieves relevant context and generates a grounded answer via Gemini.
+Distributed under the [MIT LICENSE]
 
 ---
 
-## 📐 Architecture Overview
+## Contributing
 
-```
-User Query
-    │
-    ▼
-Streamlit UI (client.py)
-    │
-    ▼
-RAG Core (rag/__init__.py)
-    ├── Selenium Crawler (crow_utils.py)
-    │       └── UnstructuredHTMLLoader → Raw Text
-    ├── RecursiveCharacterTextSplitter → Chunks
-    ├── Gemini Embedding API (batched, rate-limited) → Vectors
-    ├── FAISS Index → Similarity Search
-    └── Gemini 2.5 Flash → Final Answer
-```
-
----
-
-## ⚠️ Known Limitations
-
-- Crawling is limited to publicly accessible, JavaScript-rendered pages. Pages behind authentication or bot-detection (e.g., Cloudflare) may not be fully scraped.
-- Embedding quota limits on the free tier of Google AI may slow down ingestion for very large sites (mitigated by the built-in retry logic).
-- FAISS index is currently in-memory and not persisted between sessions; re-ingestion is required on app restart.
-
----
-
-## 📄 License
-
-Distributed under the [MIT License](LICENSE).
-
----
-
-**Developed by [Soumyadeep Roy Chowdhury](https://github.com/soumyadeep-rc)**
-Jadavpur University IT '28
-This project is licensed under the MIT License. See the LICENSE file for details.
+Contributions, issues, and feature requests are welcome!

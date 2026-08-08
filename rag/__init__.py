@@ -36,7 +36,7 @@ from selenium.webdriver.firefox.options import Options
 CUSTOM_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
 @st.cache_resource
-def get_flashrank_reranker(top_n=3):
+def get_flashrank_reranker(top_n=5):
     return FlashrankRerank(top_n=top_n)
 
 
@@ -141,7 +141,7 @@ class RAG:
             markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
             header_splits = markdown_splitter.split_text(md_text)
 
-            parent_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
+            parent_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=200)
             parent_docs = parent_splitter.split_documents(header_splits)
 
             if not parent_docs:
@@ -204,14 +204,14 @@ class RAG:
         # --- HYBRID SEARCH & RERANKER ---
         self.write_function("Fusing Semantic Search and BM25...")
         bm25_retriever = BM25Retriever.from_documents(parent_docs)
-        bm25_retriever.k = 5 
+        bm25_retriever.k = 7
 
         parent_retriever = ParentDocumentRetriever(
             vectorstore=db,
             docstore=docstore,
             child_splitter=child_splitter,
             id_key=id_key,
-            search_kwargs={"k": 7} 
+            search_kwargs={"k": 10} 
         )
 
         hybrid_retriever = EnsembleRetriever(
@@ -220,7 +220,7 @@ class RAG:
         )
 
         self.write_function("Wrapping with FlashRank Cross-Encoder...")
-        compressor = get_flashrank_reranker(top_n=3)
+        compressor = get_flashrank_reranker(top_n=5)
         compression_retriever = ContextualCompressionRetriever(
             base_compressor=compressor, 
             base_retriever=hybrid_retriever
